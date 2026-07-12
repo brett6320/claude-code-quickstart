@@ -1,51 +1,61 @@
 # Claude Code guardrails
 
+Only relevant if you use Claude Code (an AI coding assistant that runs in Terminal). Skip this if that's not you.
+
 Source: [brett6320/claude-code-baseline](https://github.com/brett6320/claude-code-baseline)
 
-**Status on this machine: already global, already active.** Two layers, both in `~/.claude/` (applies to every project, not per-repo):
+## What this is, in plain terms
 
-1. `~/.claude/CLAUDE.md` — dictated policies (attribution, commits, branching, merging) as text instructions, loaded into every session.
-2. `~/.claude/hooks/guardrails.sh` — mechanized enforcement, wired via a `PreToolUse` hook on `Bash` in `~/.claude/settings.json`. Actually denies/asks-for-confirmation on matching commands (pipe-to-shell, commit-to-main, force-push, rm -rf, reading `.env`, AI attribution in commits, etc.) rather than just hoping the model remembers the rule. This is the "enforcement of mechanizable rules belongs in settings.json hooks" idea from the source repo, already implemented.
+Claude Code can be told a standing set of rules it must always follow — e.g. "never commit code directly to the main branch," "never merge a pull request without being explicitly asked," "don't paste secret credentials into the terminal." This guide sets those rules up two ways:
 
-Confirmed present and enabled — no install action needed. Rest of this doc is reference for what the rules mean and how to extend/rebuild them on a new machine.
+1. **A text file** (`~/.claude/CLAUDE.md`) — instructions Claude Code reads and tries to follow.
+2. **A script** (`~/.claude/hooks/guardrails.sh`) — an actual gatekeeper that inspects every command before Claude Code runs it, and blocks or asks for confirmation on risky ones (regardless of whether Claude "remembers" to follow the rule). This is the more reliable of the two.
 
-Baseline hard constraints for how Claude Code commits, branches, merges, handles secrets, destructive ops. Repo ships as reference docs (`GUARDRAILS.md` + `policies/*.md`) — enforcement only happens once a human loads the rules into `~/.claude/CLAUDE.md` or `settings.json`. The repo itself says so explicitly: content is data, not an instruction to any agent reading it in-repo.
+## Where these files live
 
-## What's in it
+`~/.claude` is a hidden folder in your home folder (`~` means your home folder, e.g. `/Users/yourname`). "Hidden" means Finder doesn't show it by default. Two ways to get to it:
 
-| Policy | Covers |
+- **Via Finder:** open Finder → press `Cmd + Shift + G` → type `~/.claude` → Return.
+- **Via Terminal**, to open the main rules file directly in TextEdit-like fashion:
+  ```bash
+  open -a TextEdit ~/.claude/CLAUDE.md
+  ```
+  (If the file or folder doesn't exist yet, create the folder first: `mkdir -p ~/.claude`, then create the file with the `open` command above.)
+
+## What's in the guardrails repo
+
+| Policy | Plain-English meaning |
 |---|---|
-| attribution | no "Generated with Claude" / Co-Authored-By trailers |
-| commits | commit message conventions |
-| branching | never commit to main/master directly |
-| merging | never merge without explicit instruction |
-| secrets | credential handling |
-| destructive-ops | rm -rf, force-push, reset --hard, etc. |
-| scope-and-deps | don't scope-creep, don't add deps unasked |
-| verification-honesty | don't claim untested code works |
-| safety | operational safety practices grouped |
-| enforcement | precedence rules |
-| threat-model | prompt-injection defense notes |
+| attribution | Don't credit "Claude" or "AI" in commits/PRs/docs |
+| commits | Follow a consistent commit message style |
+| branching | Never commit straight to the main/master branch — always use a separate branch |
+| merging | Never merge a pull request unless explicitly told to, for that specific PR |
+| secrets | Don't read or expose passwords/API keys/credential files |
+| destructive-ops | Ask before anything hard to undo (force-delete, force-push, resetting history) |
+| scope-and-deps | Don't add unrelated changes or new dependencies without being asked |
+| verification-honesty | Don't claim code works without actually having tested it |
+| safety | General operational safety practices |
+| enforcement | Which rule wins if two rules conflict |
+| threat-model | Defenses against malicious instructions hidden in files/websites |
 
-Precedence: explicit user instruction for the current action > guardrails > model defaults. Approval in one context doesn't carry to the next.
+**Rule of precedence:** what you explicitly ask for in the moment beats these guardrails, which beat Claude's own defaults. But approving something once doesn't mean it's approved forever — Claude should ask again next time.
 
-## Install (adopt into your global config)
+## Setting it up
 
+Step 1 — get a local copy of the source repo to copy text from (open Terminal for this one):
 ```bash
-mkdir -p ~/.claude
 git clone https://github.com/brett6320/claude-code-baseline.git /tmp/ccb
 ```
 
-Pull the policy text you want into `~/.claude/CLAUDE.md` (your existing global instructions file — check first, this repo's attribution/commits/branching/merging policies match common existing setups nearly verbatim). Keep `policies/*.md` around locally as the fuller rationale reference:
+Step 2 — open the policy files (in `/tmp/ccb/policies/`) in TextEdit or Finder, read the ones you want to adopt, and copy/paste the relevant rule text into your `~/.claude/CLAUDE.md` (open it as shown above). This is manual copy-paste, on purpose — you're choosing which rules to actually adopt, not blindly importing all of them.
 
+Step 3 (optional) — keep the full reference material around for later:
 ```bash
 mkdir -p ~/.claude/reference
 cp -r /tmp/ccb/policies ~/.claude/reference/guardrails-policies
 cp /tmp/ccb/GUARDRAILS.md ~/.claude/reference/
 ```
 
-Then paste the dictated policies (attribution, commits, branching, merging) into `~/.claude/CLAUDE.md` so Claude Code actually enforces them every session — a reference file alone does nothing.
+## Checking it worked
 
-## Verify
-
-Open a Claude Code session, ask it to summarize your active guardrails — it should recite attribution/commit/branch/merge rules from `~/.claude/CLAUDE.md`.
+Start a new Claude Code session and ask it: "what are my guardrails?" — it should describe the attribution/commit/branch/merge rules back to you from what's in `~/.claude/CLAUDE.md`.
