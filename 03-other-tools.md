@@ -71,6 +71,21 @@ brew install --cask docker
 ```
 This installs Docker Desktop (a GUI app that appears in Applications, alongside a `docker` Terminal command). Open it once from Applications to finish setup.
 
+## Termius (for support sessions)
+
+Termius is an SSH/terminal client with a "host sharing" feature that lets a second person join your terminal session live — both of you can see and type in the same session at once. Install this if someone on the support team asks you to share a terminal session with them.
+
+```bash
+brew install --cask termius
+```
+
+Open it from Applications once installed, then sign in (or create a free account) when prompted — an account is required for the multiplayer/host-sharing feature to work, since that's what connects the two participants.
+
+To start a shared session when support asks for one:
+1. Open Termius, connect to the host as you normally would.
+2. Click the session's "..." menu (or right-click the active session tab) and choose **Share Host / Invite** (wording varies by Termius version).
+3. Send the generated invite link to whoever needs to join — they'll need a (free) Termius account too, on any of their devices.
+
 ## Nice-to-have GUI apps
 
 - **Rectangle** — snap windows to half/quarter of the screen with keyboard shortcuts:
